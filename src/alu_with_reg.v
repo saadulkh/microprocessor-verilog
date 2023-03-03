@@ -1,21 +1,21 @@
 module alu_with_reg #(
-	parameter BIT_WIDTH = 4
+	parameter BIT_WIDTH = 1
 ) (
-	output reg cout,
+	output wire cout,
 	output wire [BIT_WIDTH - 1:0] out,
 	input wire [BIT_WIDTH - 1:0] in,
 	input wire s_reg, en_ra, en_rb, s, clk
 );
 
 	wire cout_alu;
-	wire [BIT_WIDTH - 1:0] out_mi, out_ra, out_rb, out_alu;
+	wire [BIT_WIDTH - 1:0] out_mi, out_ra, out_rb;
 
 	mux_2to1 #(
 		.BIT_WIDTH(BIT_WIDTH)
 	) mux_in (
 		.out(out_mi),
 		.sel(s_reg),
-		.a(out_alu),
+		.a(out),
 		.b(in)
 	);
 
@@ -36,14 +36,12 @@ module alu_with_reg #(
 		.BIT_WIDTH(BIT_WIDTH)
 	) alu1 (
 		.cout(cout_alu),
-		.out(out_alu),
+		.out(out),
 		.a(out_ra),
 		.b(out_rb),
 		.sel(s)
 	);
 
-	assign out = out_alu;
-	always @(posedge clk)
-		cout <= cout_alu;
+	register #(.BIT_WIDTH(1)) reg_carry (.out(cout), .in(cout_alu), .en(1), .clk(clk));
 
 endmodule

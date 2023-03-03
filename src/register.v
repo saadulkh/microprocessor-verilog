@@ -1,5 +1,5 @@
 module register #(
-    parameter BIT_WIDTH = 4
+    parameter BIT_WIDTH = 1
 ) (
     output reg [BIT_WIDTH - 1:0] out,
     input wire [BIT_WIDTH - 1:0] in,

@@ -1,5 +1,5 @@
 module adder #(
-	parameter BIT_WIDTH = 4
+	parameter BIT_WIDTH = 1
 ) (
 	output wire cout,
 	output wire [BIT_WIDTH - 1:0] sum,
