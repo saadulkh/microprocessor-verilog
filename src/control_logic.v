@@ -4,20 +4,20 @@ module control_logic #(
     parameter ROM_FILE = "rom_init.txt"
 ) (
     output wire [INST_WIDTH - 1:0] inst,
-    input wire [BIT_WIDTH - 1:0] count_in,
-    input wire jmp_inst, cjmp_inst, alu_cout, rst, clk
+    input wire [BIT_WIDTH - 1:0] in_count,
+    input wire jmp_inst, cjmp_inst, cout_alu, rst, clk
 );
 
     wire count_load;
     wire [BIT_WIDTH - 1:0] count_out;
 
-    assign count_load = jmp_inst | (cjmp_inst & alu_cout);
+    assign count_load = jmp_inst | (cjmp_inst & cout_alu);
     
     counter #(
         .BIT_WIDTH(BIT_WIDTH)
     ) prog_count (
         .out(count_out),
-        .in(count_in),
+        .in(in_count),
         .load(count_load),
         .rst(rst),
         .clk(clk)

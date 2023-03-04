@@ -7,6 +7,14 @@ module alu #(
 	input wire sel
 );
 
-	adder #(.BIT_WIDTH(BIT_WIDTH)) adder1 (.cout(cout), .sum(out), .cin(sel), .a(a), .b(b ^ {BIT_WIDTH{sel}}));
+	adder #(
+		.BIT_WIDTH(BIT_WIDTH)
+	) adder1 (
+		.cout(cout),
+		.sum(out),
+		.cin(sel),
+		.a(a),
+		.b(b ^ {BIT_WIDTH{sel}})
+	);
 
 endmodule
