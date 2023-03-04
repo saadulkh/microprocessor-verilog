@@ -1,4 +1,4 @@
-module control_logic #(
+module control_unit #(
     parameter BIT_WIDTH = 1,
     parameter INST_WIDTH = 3,
     parameter OPCODE_WIDTH = 2,

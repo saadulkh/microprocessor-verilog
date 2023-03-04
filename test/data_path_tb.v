@@ -1,4 +1,4 @@
-module alu_with_reg_tb; // Swapping example (Section 4)
+module data_path_tb; // Swapping example (Section 4)
     parameter BIT_WIDTH = 4;
 
     wire cout;
@@ -8,7 +8,7 @@ module alu_with_reg_tb; // Swapping example (Section 4)
     reg [1:0] reg_addr;
     reg s_reg, s, clk;
 
-    alu_with_reg #(.BIT_WIDTH(BIT_WIDTH)) ralu (
+    data_path #(.BIT_WIDTH(BIT_WIDTH)) UUT (
         .cout(cout),
         .out(out),
         .in(in),

@@ -11,21 +11,21 @@ module top #(
     wire alu_cout;
     wire [INST_WIDTH - 1:0] inst;
 
-    control_logic #(
+    control_unit #(
         .BIT_WIDTH(BIT_WIDTH),
         .INST_WIDTH(INST_WIDTH),
         .OPCODE_WIDTH(OPCODE_WIDTH),
         .ROM_FILE(ROM_FILE)
-    ) logic_unit (
+    ) cu (
         .inst(inst),
         .alu_cout(alu_cout),
         .rst(rst),
         .clk(clk)
     );
 
-    alu_with_reg #(
+    data_path #(
         .BIT_WIDTH(BIT_WIDTH)
-    ) alu_unit (
+    ) dp (
         .cout(alu_cout),
         .out(out),
         .in({1'b0, inst[INST_WIDTH - OPCODE_WIDTH - 1:0]}),

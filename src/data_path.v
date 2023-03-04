@@ -1,4 +1,4 @@
-module alu_with_reg #(
+module data_path #(
 	parameter BIT_WIDTH = 1
 ) (
 	output wire cout,
