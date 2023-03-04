@@ -4,19 +4,31 @@ module top #(
     parameter ROM_FILE = "rom_init.txt"
 ) (
     output wire [BIT_WIDTH - 1:0] out,
-    input wire rst, clk
+    input wire [BIT_WIDTH - 2:0] in,
+    input wire sel_usr, rst, clk
 );
 
-    wire alu_cout;
+    wire cout_alu;
     wire [INST_WIDTH - 1:0] inst;
 
     wire jmp_inst = inst[INST_WIDTH - 1];
     wire cjmp_inst = inst[INST_WIDTH - 2];
-    wire [1:0] reg_addr = inst[INST_WIDTH - 3:INST_WIDTH - 4];
-    wire reg_sel = inst[INST_WIDTH - 5];
+    wire [1:0] addr_reg = inst[INST_WIDTH - 3:INST_WIDTH - 4];
+    wire sel_in = inst[INST_WIDTH - 5];
 
-    wire op_sel = inst[INST_WIDTH - 6];
-    wire [BIT_WIDTH - 1:0] data_in = {1'b0, inst[INST_WIDTH - 6:0]};
+    wire sel_op = inst[INST_WIDTH - 6];
+    wire [BIT_WIDTH - 1:0] in_imm = {1'b0, inst[INST_WIDTH - 6:0]};
+    wire [BIT_WIDTH - 1:0] in_usr = {1'b0, in};
+
+    wire [BIT_WIDTH - 1:0] in_data;
+    mux_2to1 #(
+        .BIT_WIDTH(BIT_WIDTH)
+    ) mux_usr (
+        .out(in_data),
+        .a(in_imm),
+        .b(in_usr),
+        .sel(sel_usr)
+    );
 
     control_logic #(
         .BIT_WIDTH(BIT_WIDTH),
@@ -24,10 +36,10 @@ module top #(
         .ROM_FILE(ROM_FILE)
     ) control_unit (
         .inst(inst),
-        .count_in(data_in),
+        .in_count(in_imm),
         .jmp_inst(jmp_inst),
         .cjmp_inst(cjmp_inst),
-        .alu_cout(alu_cout),
+        .cout_alu(cout_alu),
         .rst(rst),
         .clk(clk)
     );
@@ -35,12 +47,12 @@ module top #(
     data_path #(
         .BIT_WIDTH(BIT_WIDTH)
     ) exec_unit (
-        .cout(alu_cout),
+        .cout(cout_alu),
         .out(out),
-        .data_in(data_in),
-        .reg_addr(reg_addr),
-        .reg_sel(reg_sel),
-        .op_sel(op_sel),
+        .in(in_data),
+        .addr_reg(addr_reg),
+        .sel_in(sel_in),
+        .sel_op(sel_op),
         .clk(clk)
     );
 
