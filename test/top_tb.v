@@ -1,6 +1,6 @@
 module top_tb;
     parameter BIT_WIDTH = 4;
-    parameter ROM_FILE = "sim/fibonacci_instructions_4bit.txt";
+    parameter ROM_FILE = "sim/fibonacci_4bit.txt";
 
     wire [BIT_WIDTH - 1:0] out;
     reg rst, clk;
