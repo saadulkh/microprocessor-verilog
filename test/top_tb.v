@@ -1,6 +1,6 @@
 module top_tb;
     parameter BIT_WIDTH = 4;
-    parameter ROM_FILE = "fibonacci_instructions.txt";
+    parameter ROM_FILE = "sim/fibonacci_instructions_4bit.txt";
 
     wire [BIT_WIDTH - 1:0] out;
     reg rst, clk;
@@ -21,7 +21,7 @@ module top_tb;
 
         $monitor(out);
 
-        for (i = 0; i < 150; i = i + 1) begin
+        for (i = 0; i < 400; i = i + 1) begin
             clk = ~clk; #10;
         end
     end

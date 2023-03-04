@@ -3,9 +3,9 @@ module data_path #(
 ) (
 	output wire cout,
 	output wire [BIT_WIDTH - 1:0] out,
-	input wire [BIT_WIDTH - 1:0] in,
+	input wire [BIT_WIDTH - 1:0] data_in,
 	input wire [1:0] reg_addr,
-	input wire s_reg, s, clk
+	input wire reg_sel, op_sel, clk
 );
 
 	wire cout_alu, en_ra, en_rb, en_ro, _;
@@ -15,9 +15,9 @@ module data_path #(
 		.BIT_WIDTH(BIT_WIDTH)
 	) mux_in (
 		.out(out_mi),
-		.sel(s_reg),
+		.sel(reg_sel),
 		.a(alu_out),
-		.b(in)
+		.b(data_in)
 	);
 
 	register #(
@@ -53,7 +53,7 @@ module data_path #(
 		.out(alu_out),
 		.a(out_ra),
 		.b(out_rb),
-		.sel(s)
+		.sel(op_sel)
 	);
 
 	register #(.BIT_WIDTH(1)) reg_carry (.out(cout), .in(cout_alu), .en(1'b1), .clk(clk));
