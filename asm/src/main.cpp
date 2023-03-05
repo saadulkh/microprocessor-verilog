@@ -164,7 +164,7 @@ int main(int argc, char **argv)
         std::stringstream ss(line);
         std::string goto_label, opcode;
         std::getline(ss, goto_label);
-        std::getline(std::stringstream(goto_label), opcode, ' ');
+        std::stringstream(goto_label) >> opcode;
 
         if (goto_label.find(':') != std::string::npos)
         {
