@@ -9,12 +9,12 @@
 const std::string opcode_csv = "db/opcode.csv";
 const std::string register_csv = "db/register.csv";
 
-// Define type aliases for readability
+// Type aliases for readability
 using Register = std::string;
 using Opcode = std::string;
 using MachineCode = std::string;
 
-// Define a struct to represent an instruction
+// Struct to represent an instruction
 struct Instruction
 {
     Opcode opcode;
@@ -24,8 +24,9 @@ struct Instruction
 
 int bit_width = 4;
 
-// Define a function to parse an instruction from a string
-Instruction parse_instruction(const std::string &line)
+// Function to parse an instruction from a string
+Instruction parse_instruction(const std::string &line,
+                              const std::unordered_map<std::string, std::string> &register_map)
 {
     Instruction instr;
     std::stringstream ss(line);
@@ -34,7 +35,7 @@ Instruction parse_instruction(const std::string &line)
     {
         instr.rd.pop_back();
     }
-    if (std::isdigit(instr.rd[0]))
+    if (std::isdigit(instr.rd[0]) || register_map.count(instr.rd) == 0)
     {
         instr.rs = instr.rd;
         instr.rd = "R!";
@@ -42,43 +43,44 @@ Instruction parse_instruction(const std::string &line)
     return instr;
 }
 
-// Define a function to convert an instruction to machine code
+// Function to convert an instruction to machine code
 MachineCode assemble_instruction(
     const Instruction &instr,
     const std::unordered_map<std::string, std::string> &opcode_map,
-    const std::unordered_map<std::string, std::string> &register_map)
+    const std::unordered_map<std::string, std::string> &register_map,
+    const std::unordered_map<std::string, std::string> &goto_map)
 {
+    // Invalid instruction checks
     if (opcode_map.count(instr.opcode) == 0)
     {
         throw std::runtime_error("Invalid opcode: " + instr.opcode);
     }
-    if (register_map.count(instr.rd) == 0)
+    if (register_map.count(instr.rd) == 0 && goto_map.count(instr.rd) == 0)
     {
         throw std::runtime_error("Invalid register: " + instr.rd);
     }
 
-    MachineCode machine_code;
+    // Decode opcode
     Opcode jump_control, data_path;
     std::stringstream ss(opcode_map.at(instr.opcode));
     ss >> jump_control >> data_path;
 
+    // Prepare machine code
+    MachineCode machine_code;
     machine_code += jump_control;
     machine_code += register_map.at(instr.rd);
     machine_code += "_";
     machine_code += data_path;
+
+    // Handel immediate and don't care values
+    std::string immediate_value = "";
     if (std::isdigit(instr.rs[0]))
     {
-        std::string binary_string;
-        for (int i = 0; i < bit_width - 1; i++)
-        {
-            if ((i % 4) == 0 && i != 0)
-            {
-                binary_string += "_";
-            }
-            binary_string += std::to_string((std::stoi(instr.rs) & (1 << i)) != 0);
-        }
-        std::reverse(binary_string.begin(), binary_string.end());
-        machine_code += binary_string;
+        immediate_value = instr.rs;
+    }
+    else if (goto_map.count(instr.rs) != 0)
+    {
+        immediate_value = goto_map.at(instr.rs);
     }
     else
     {
@@ -90,6 +92,21 @@ MachineCode assemble_instruction(
             }
             machine_code += "0";
         }
+    }
+
+    if (!immediate_value.empty())
+    {
+        std::string binary_string;
+        for (int i = 0; i < bit_width - 1; i++)
+        {
+            if ((i % 4) == 0 && i != 0)
+            {
+                binary_string += "_";
+            }
+            binary_string += std::to_string((std::stoi(immediate_value) & (1 << i)) != 0);
+        }
+        std::reverse(binary_string.begin(), binary_string.end());
+        machine_code += binary_string;
     }
     return machine_code;
 }
@@ -117,7 +134,10 @@ int main(int argc, char **argv)
         std::getline(ss, machine_code, ',');
         register_map[reg] = machine_code;
     }
+    opcode_file.close();
+    register_file.close();
 
+    // Handle arguments and prepare input output filenames
     std::string input_filename = argv[1];
     std::string output_filename;
     if (argc == 2)
@@ -135,25 +155,52 @@ int main(int argc, char **argv)
         throw std::runtime_error("Invalid arguments provided for " + std::string(argv[0]));
     }
 
-    // Assemble instructions from input file
+    // Create goto labels database
+    std::unordered_map<std::string, std::string> goto_map;
     std::ifstream input_file(input_filename);
+    int instr_count = 0;
+    while (std::getline(input_file, line))
+    {
+        std::stringstream ss(line);
+        std::string goto_label, opcode;
+        std::getline(ss, goto_label);
+        std::getline(std::stringstream(goto_label), opcode, ' ');
+
+        if (goto_label.find(':') != std::string::npos)
+        {
+            goto_label.pop_back();
+            goto_map[goto_label] = std::to_string(instr_count);
+        }
+        else if (opcode_map.count(opcode) != 0)
+        {
+            instr_count++;
+        }
+    }
+    input_file.close();
+
+    // Assemble instructions from input file
+    input_file.open(input_filename);
     std::ofstream output_file(output_filename);
     while (std::getline(input_file, line))
     {
-        Instruction instr = parse_instruction(line);
+        Instruction instr = parse_instruction(line, register_map);
         if (instr.opcode.compare(".bit_width") == 0)
         {
             bit_width = std::stoi(instr.rs);
         }
-        else if (instr.opcode.empty())
+        else if (!instr.opcode.empty() && instr.opcode.find(':') == std::string::npos)
         {
-        }
-        else
-        {
-            MachineCode machine_code = assemble_instruction(instr, opcode_map, register_map);
+            MachineCode machine_code = assemble_instruction(
+                instr,
+                opcode_map,
+                register_map,
+                goto_map);
             output_file << machine_code << std::endl;
+            instr_count++;
         }
     }
+    input_file.close();
+    output_file.close();
 
     return 0;
 }
