@@ -166,14 +166,25 @@ int main(int argc, char **argv)
         std::getline(ss, goto_label);
         std::stringstream(goto_label) >> opcode;
 
-        if (goto_label.find(':') != std::string::npos)
+        if (instr_count >= (1 << bit_width))
         {
-            goto_label.pop_back();
-            goto_map[goto_label] = std::to_string(instr_count);
+            throw std::runtime_error("Instruction count overflow: " + goto_label);
         }
         else if (opcode_map.count(opcode) != 0)
         {
             instr_count++;
+        }
+        else if (goto_label.find(':') != std::string::npos)
+        {
+            if (instr_count >= (1 << (bit_width - 1)))
+            {
+                throw std::runtime_error("Instruction count overflow: " + goto_label);
+            }
+            else
+            {
+                goto_label.pop_back();
+                goto_map[goto_label] = std::to_string(instr_count);
+            }
         }
     }
     input_file.close();
