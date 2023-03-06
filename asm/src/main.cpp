@@ -92,10 +92,15 @@ MachineCode assemble_instruction(
     // Add immediate value to the machine code
     if (!immediate_value.empty())
     {
+        int imm_val = std::stoi(immediate_value);
+        if (imm_val >= (1 << (bit_width - 1)))
+        {
+            throw std::runtime_error("Immediate value overflow: " + instr.opcode);
+        }
         std::string binary_string;
         for (int i = 0; i < bit_width - 1; i++)
         {
-            binary_string += std::to_string((std::stoi(immediate_value) & (1 << i)) != 0);
+            binary_string += std::to_string((imm_val & (1 << i)) != 0);
         }
         std::reverse(binary_string.begin(), binary_string.end());
         machine_code += binary_string;
@@ -167,25 +172,28 @@ int main(int argc, char **argv)
         std::getline(ss, goto_label);
         std::stringstream(goto_label) >> opcode;
 
-        if (instr_count >= (1 << bit_width))
+        Instruction instr = parse_instruction(line, register_map);
+
+        if (instr.opcode.compare(".bit_width") == 0)
         {
-            throw std::runtime_error("Instruction count overflow: " + goto_label);
+            bit_width = std::stoi(instr.rs);
         }
-        else if (opcode_map.count(opcode) != 0)
+        else if (instr_count >= (1 << bit_width))
+        {
+            throw std::runtime_error("Instruction count overflow: " + instr.opcode);
+        }
+        else if (opcode_map.count(instr.opcode) != 0)
         {
             instr_count++;
         }
-        else if (goto_label.find(':') != std::string::npos)
+        else if (instr.opcode.find(':') != std::string::npos)
         {
             if (instr_count >= (1 << (bit_width - 1)))
             {
-                throw std::runtime_error("Instruction count overflow: " + goto_label);
+                throw std::runtime_error("Instruction count overflow: " + instr.opcode);
             }
-            else
-            {
-                goto_label.pop_back();
-                goto_map[goto_label] = std::to_string(instr_count);
-            }
+            instr.opcode.pop_back();
+            goto_map[instr.opcode] = std::to_string(instr_count);
         }
     }
     input_file.close();
@@ -196,11 +204,7 @@ int main(int argc, char **argv)
     while (std::getline(input_file, line))
     {
         Instruction instr = parse_instruction(line, register_map);
-        if (instr.opcode.compare(".bit_width") == 0)
-        {
-            bit_width = std::stoi(instr.rs);
-        }
-        else if (!instr.opcode.empty() && instr.opcode.find(':') == std::string::npos)
+        if (opcode_map.count(instr.opcode) != 0)
         {
             MachineCode machine_code = assemble_instruction(
                 instr,
@@ -208,7 +212,6 @@ int main(int argc, char **argv)
                 register_map,
                 goto_map);
             output_file << machine_code << std::endl;
-            instr_count++;
         }
     }
     input_file.close();

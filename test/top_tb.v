@@ -13,14 +13,14 @@ module top_tb;
         .out(out),
         .in(in),
         .sel_usr(sel_usr),
-        .rst(rst),
+        .rst(~rst),
         .clk(clk)
     );
 
     integer i = 0;
     initial begin
         sel_usr = 0;
-        rst = 1;
+        rst = 0;
         clk = 0; #10;
 
         // in = 7'b000_1000;
