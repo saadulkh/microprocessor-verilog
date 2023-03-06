@@ -69,7 +69,6 @@ MachineCode assemble_instruction(
     MachineCode machine_code;
     machine_code += jump_control;
     machine_code += register_map.at(instr.rd);
-    machine_code += "_";
     machine_code += data_path;
 
     // Handel immediate and don't care values
@@ -86,27 +85,29 @@ MachineCode assemble_instruction(
     {
         for (int i = 0; i < bit_width - 2; i++)
         {
-            if ((i % 4) == 2)
-            {
-                machine_code += "_";
-            }
             machine_code += "0";
         }
     }
 
+    // Add immediate value to the machine code
     if (!immediate_value.empty())
     {
         std::string binary_string;
         for (int i = 0; i < bit_width - 1; i++)
         {
-            if ((i % 4) == 0 && i != 0)
-            {
-                binary_string += "_";
-            }
             binary_string += std::to_string((std::stoi(immediate_value) & (1 << i)) != 0);
         }
         std::reverse(binary_string.begin(), binary_string.end());
         machine_code += binary_string;
+    }
+
+    // Add underscore after every 4 bits to improve readability
+    for (int i = 0; i < machine_code.size(); i++)
+    {
+        if (i % 5 == 4)
+        {
+            machine_code.insert(i, "_");
+        }
     }
     return machine_code;
 }
